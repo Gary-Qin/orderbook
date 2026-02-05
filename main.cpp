@@ -12,69 +12,78 @@ struct Order {
     unsigned int quantity;
 };
 
-void displayOrders(const std::map<unsigned int, std::deque<Order>> a, const std::map<unsigned int, std::deque<Order>, std::greater<>> b) {
-    std::cout << "asks:" << '\n';
-    for (const auto& [key, value] : a) {
-	std::cout << key << " -> [";
-	for(Order o : value)
-	    std::cout << "Order " << o.id << " for " << o.quantity << ", ";
-	std::cout << "]\n\n";
+void displayOrders(const std::map<unsigned int, std::deque<Order>>& asks,
+                   const std::map<unsigned int, std::deque<Order>, std::greater<>>& bids) {
+    std::cout << "Asks:\n";
+    std::cout << std::string(50, '-') << '\n';
+    for (const auto& [price, orders] : asks) {
+        std::cout << '$' << price << " -> [";
+        bool first = true;
+        for (const Order& order : orders) {
+            if (!first) std::cout << ", ";
+            std::cout << "Order #" << order.id << " (" << order.quantity << ")";
+            first = false;
+        }
+        std::cout << "]\n";
     }
 
-    std::cout << "bids:" << '\n';
-    for (const auto& [key, value] : b) {
-	std::cout << key << " -> [";
-	for(Order o : value)
-	    std::cout << "Order " << o.id << " for " << o.quantity << ", ";
-	std::cout << "]\n\n";
+    std::cout << '\n' << "Bids:\n";
+    std::cout << std::string(50, '-') << '\n';
+    for (const auto& [price, orders] : bids) {
+        std::cout << '$' << price << " -> [";
+        bool first = true;
+        for (const Order& order : orders) {
+            if (!first) std::cout << ", ";
+            std::cout << "Order #" << order.id << " (" << order.quantity << ")";
+            first = false;
+        }
+        std::cout << "]\n";
     }
 }
+
+void match(std::map<unsigned int, std::deque<Order>>& asks,
+           std::map<unsigned int, std::deque<Order>, std::greater<>>& bids) {}
 
 int main() {
     std::map<unsigned int, std::deque<Order>> asks{};
     std::map<unsigned int, std::deque<Order>, std::greater<>> bids{};
     unsigned int ordersMade{0};
 
-    while(true) {
-	std::cout << "enter action (b: buy, s: sell, q: quit): ";
-	
-	char action{};
-	std::cin >> action;
+    while (true) {
+        std::cout << "enter action (b: buy, s: sell, q: quit): ";
 
-	unsigned int quantity{};
-	unsigned int price{};
+        char action{};
+        std::cin >> action;
 
-	switch(action) {
-	    case 'b':
-		std::cout << "how much would you like to buy? ";
-		std::cin >> quantity;
+        unsigned int quantity{};
+        unsigned int price{};
 
-		std::cout << "how much would you buy for? ";
-		std::cin >> price;
+        if (action == 'b') {
+            std::cout << "how much would you like to buy? ";
+            std::cin >> quantity;
 
-		std::cout << "buying " << quantity << " shares at $" << price << "\n\n";
-		bids[price].push_back({ordersMade, Side::BUY, price, quantity});
-		ordersMade++;
-		displayOrders(asks, bids);
-		break;
-	    case 's':
-		std::cout << "how much would you like to sell? ";
-		std::cin >> quantity;
+            std::cout << "how much would you buy for? ";
+            std::cin >> price;
 
-		std::cout << "how much would you sell for? ";
-		std::cin >> price;
+            std::cout << "buying " << quantity << " shares at $" << price << "\n\n";
+            bids[price].push_back({ordersMade, Side::BUY, price, quantity});
+        } else if (action == 's') {
+            std::cout << "how much would you like to sell? ";
+            std::cin >> quantity;
 
-		std::cout << "selling " << quantity << " shares at $" << price << "\n\n";
-		asks[price].push_back({ordersMade, Side::BUY, price, quantity});
-		ordersMade++;
-		displayOrders(asks, bids);
-		break;
-	    case 'q':
-		std::cout << "quitting" << '\n';
-		return 0;
-	    default:
-		break;
-	}
+            std::cout << "how much would you sell for? ";
+            std::cin >> price;
+
+            std::cout << "selling " << quantity << " shares at $" << price << "\n\n";
+            asks[price].push_back({ordersMade, Side::BUY, price, quantity});
+        } else if (action == 'q') {
+            std::cout << "quitting" << '\n';
+            return 0;
+        }
+
+        ordersMade++;
+        match(asks, bids);
+        displayOrders(asks, bids);
     }
 
     return 0;
