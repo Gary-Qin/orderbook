@@ -6,14 +6,14 @@
 enum Side { BUY, SELL };
 
 struct Order {
-    unsigned int id;
+    int id;
     Side side;
-    unsigned int price;
-    unsigned int quantity;
+    int price;
+    int quantity;
 };
 
-void displayOrders(const std::map<unsigned int, std::deque<Order>>& asks,
-                   const std::map<unsigned int, std::deque<Order>, std::greater<>>& bids) {
+void displayOrders(const std::map<int, std::deque<Order>>& asks,
+                   const std::map<int, std::deque<Order>, std::greater<>>& bids) {
     std::cout << "Asks:\n";
     std::cout << std::string(50, '-') << '\n';
     for (const auto& [price, orders] : asks) {
@@ -41,13 +41,45 @@ void displayOrders(const std::map<unsigned int, std::deque<Order>>& asks,
     }
 }
 
-void match(std::map<unsigned int, std::deque<Order>>& asks,
-           std::map<unsigned int, std::deque<Order>, std::greater<>>& bids) {}
+void match(std::map<int, std::deque<Order>>& asks,
+           std::map<int, std::deque<Order>, std::greater<>>& bids) {
+    if (asks.begin() == asks.end() || bids.begin() == bids.end()) {
+        return;
+    }
+    // TO-DO:
+    // - implement loop
+    // - implement logic if quantities are different
+    auto asks_it = asks.begin();
+    auto bids_it = bids.begin();
+
+    if (bids_it->first >= asks_it->first) {
+        std::cout << bids_it->first << " >= " << asks_it->first << '\n';
+        std::deque<Order>& asks_deque = asks_it->second;
+        std::deque<Order>& bids_deque = bids_it->second;
+        auto asks_deque_it = asks_deque.begin();
+        auto bids_deque_it = bids_deque.begin();
+
+        if (asks_deque_it->quantity == bids_deque_it->quantity) {
+            asks_deque.pop_front();
+            bids_deque.pop_front();
+        } else {
+            std::cout << "unimplemented!" << '\n';
+        }
+    }
+
+    if (asks_it->second.empty()) {
+        asks_it = asks.erase(asks_it);
+    }
+
+    if (bids_it->second.empty()) {
+        bids_it = bids.erase(bids_it);
+    }
+}
 
 int main() {
-    std::map<unsigned int, std::deque<Order>> asks{};
-    std::map<unsigned int, std::deque<Order>, std::greater<>> bids{};
-    unsigned int ordersMade{0};
+    std::map<int, std::deque<Order>> asks{};
+    std::map<int, std::deque<Order>, std::greater<>> bids{};
+    int ordersMade{0};
 
     while (true) {
         std::cout << "enter action (b: buy, s: sell, q: quit): ";
@@ -55,8 +87,8 @@ int main() {
         char action{};
         std::cin >> action;
 
-        unsigned int quantity{};
-        unsigned int price{};
+        int quantity{};
+        int price{};
 
         if (action == 'b') {
             std::cout << "how much would you like to buy? ";
