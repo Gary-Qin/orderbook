@@ -43,36 +43,41 @@ void displayOrders(const std::map<int, std::deque<Order>>& asks,
 
 void match(std::map<int, std::deque<Order>>& asks,
            std::map<int, std::deque<Order>, std::greater<>>& bids) {
-    if (asks.begin() == asks.end() || bids.begin() == bids.end()) {
-        return;
-    }
-    // TO-DO:
-    // - implement loop
-    // - implement logic if quantities are different
     auto asks_it = asks.begin();
     auto bids_it = bids.begin();
 
-    if (bids_it->first >= asks_it->first) {
-        std::cout << bids_it->first << " >= " << asks_it->first << '\n';
+    // if highest buy price >= lowest sell price, initiate trade
+    while (bids_it->first >= asks_it->first &&
+           !(asks.begin() == asks.end() || bids.begin() == bids.end())) {
         std::deque<Order>& asks_deque = asks_it->second;
         std::deque<Order>& bids_deque = bids_it->second;
         auto asks_deque_it = asks_deque.begin();
         auto bids_deque_it = bids_deque.begin();
 
-        if (asks_deque_it->quantity == bids_deque_it->quantity) {
+        if (asks_deque_it->quantity > bids_deque_it->quantity) {
+            std::cout << "ORDER: full fill of bid #" << bids_deque_it->id
+                      << ", partial fill of ask #" << asks_deque_it->id << '\n';
+            asks_deque_it->quantity -= bids_deque_it->quantity;
+            bids_deque.pop_front();
+        } else if (bids_deque_it->quantity > asks_deque_it->quantity) {
+            std::cout << "ORDER: partial fill of bid #" << bids_deque_it->id
+                      << ", full fill of ask #" << asks_deque_it->id << '\n';
+            bids_deque_it->quantity -= asks_deque_it->quantity;
+            asks_deque.pop_front();
+        } else {
+            std::cout << "ORDER: full fill of bid #" << bids_deque_it->id << ", full fill of ask #"
+                      << asks_deque_it->id << '\n';
             asks_deque.pop_front();
             bids_deque.pop_front();
-        } else {
-            std::cout << "unimplemented!" << '\n';
         }
-    }
 
-    if (asks_it->second.empty()) {
-        asks_it = asks.erase(asks_it);
-    }
+        if (asks_it->second.empty()) {
+            asks_it = asks.erase(asks_it);
+        }
 
-    if (bids_it->second.empty()) {
-        bids_it = bids.erase(bids_it);
+        if (bids_it->second.empty()) {
+            bids_it = bids.erase(bids_it);
+        }
     }
 }
 
@@ -97,7 +102,8 @@ int main() {
             std::cout << "how much would you buy for? ";
             std::cin >> price;
 
-            std::cout << "buying " << quantity << " shares at $" << price << "\n\n";
+            std::cout << "order " << ordersMade << ": buying " << quantity << " shares at $"
+                      << price << "\n\n";
             bids[price].push_back({ordersMade, Side::BUY, price, quantity});
         } else if (action == 's') {
             std::cout << "how much would you like to sell? ";
@@ -106,8 +112,9 @@ int main() {
             std::cout << "how much would you sell for? ";
             std::cin >> price;
 
-            std::cout << "selling " << quantity << " shares at $" << price << "\n\n";
-            asks[price].push_back({ordersMade, Side::BUY, price, quantity});
+            std::cout << "order " << ordersMade << ": selling " << quantity << " shares at $"
+                      << price << "\n\n";
+            asks[price].push_back({ordersMade, Side::SELL, price, quantity});
         } else if (action == 'q') {
             std::cout << "quitting" << '\n';
             return 0;
