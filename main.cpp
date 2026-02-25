@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <deque>
 #include <functional>
 #include <iostream>
@@ -43,41 +44,32 @@ void displayOrders(const std::map<int, std::deque<Order>>& asks,
 
 void match(std::map<int, std::deque<Order>>& asks,
            std::map<int, std::deque<Order>, std::greater<>>& bids) {
-    auto asks_it = asks.begin();
-    auto bids_it = bids.begin();
+    while (!asks.empty() && !bids.empty()) {
+        auto asks_it = asks.begin();
+        auto bids_it = bids.begin();
 
-    // if highest buy price >= lowest sell price, initiate trade
-    while (bids_it->first >= asks_it->first &&
-           !(asks.begin() == asks.end() || bids.begin() == bids.end())) {
-        std::deque<Order>& asks_deque = asks_it->second;
-        std::deque<Order>& bids_deque = bids_it->second;
-        auto asks_deque_it = asks_deque.begin();
-        auto bids_deque_it = bids_deque.begin();
-
-        if (asks_deque_it->quantity > bids_deque_it->quantity) {
-            std::cout << "ORDER: full fill of bid #" << bids_deque_it->id
-                      << ", partial fill of ask #" << asks_deque_it->id << '\n';
-            asks_deque_it->quantity -= bids_deque_it->quantity;
-            bids_deque.pop_front();
-        } else if (bids_deque_it->quantity > asks_deque_it->quantity) {
-            std::cout << "ORDER: partial fill of bid #" << bids_deque_it->id
-                      << ", full fill of ask #" << asks_deque_it->id << '\n';
-            bids_deque_it->quantity -= asks_deque_it->quantity;
-            asks_deque.pop_front();
-        } else {
-            std::cout << "ORDER: full fill of bid #" << bids_deque_it->id << ", full fill of ask #"
-                      << asks_deque_it->id << '\n';
-            asks_deque.pop_front();
-            bids_deque.pop_front();
+        // if highest buy price >= lowest sell price, initiate trade
+        if (bids_it->first < asks_it->first) {
+            break;
         }
 
-        if (asks_it->second.empty()) {
-            asks_it = asks.erase(asks_it);
-        }
+        auto& asks_deque = asks_it->second;
+        auto& bids_deque = bids_it->second;
 
-        if (bids_it->second.empty()) {
-            bids_it = bids.erase(bids_it);
-        }
+        auto& ask = asks_deque.front();
+        auto& bid = bids_deque.front();
+
+        int sharesTraded = std::min(ask.quantity, bid.quantity);
+        std::cout << "TRADE: bid #" << bid.id << " vs ask #" << ask.id << " qty=" << sharesTraded
+                  << '\n';
+        ask.quantity -= sharesTraded;
+        bid.quantity -= sharesTraded;
+
+        if (ask.quantity == 0) asks_deque.pop_front();
+        if (bid.quantity == 0) bids_deque.pop_front();
+
+        if (asks_deque.empty()) asks.erase(asks_it);
+        if (bids_deque.empty()) bids.erase(bids_it);
     }
 }
 
